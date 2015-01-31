@@ -270,8 +270,8 @@ sn: Doesnthaveone
 dn: cn=Jennifer Grünwald,$BASE_DN
 cn: Jennifer Grünwald
 objectClass: top
-objectClass: piwikPerson
-uid: jenngrünwald
+objectClass: inetOrgPerson
+uid: jenngrunwald
 userPassword: `slappasswd -h {md5} -s nypl`
 sn: Grünwald
 

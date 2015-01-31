@@ -209,7 +209,7 @@ class AuthenticationTest extends LdapIntegrationTest
     public function test_LdapAuth_AuthenticatesSuccessfully_WhenUidContainsUmlaut()
     {
         $ldapAuth = LdapAuth::makeConfigured();
-        $ldapAuth->setLogin('jenngrünwald');
+        $ldapAuth->setLogin('jenngrunwald');
         $ldapAuth->setPassword('nypl');
         $authResult = $ldapAuth->authenticate();
 
