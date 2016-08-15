@@ -10,6 +10,7 @@ namespace Piwik\Plugins\LoginLdap\LdapInterop;
 use Piwik\Access;
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\LoginLdap\Config;
+use Piwik\Plugins\LoginLdap\Settings;
 use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Site;
@@ -57,9 +58,9 @@ class UserSynchronizer
     private $userMapper;
 
     /**
-     * UserAccessMapper instance used to determine Piwik user access using LDAP user entities.
+     * UserAccessMapperInterface instance used to determine Piwik user access using LDAP user entities.
      *
-     * @var UserAccessMapper
+     * @var UserAccessMapperInterface
      */
     private $userAccessMapper;
 
@@ -152,6 +153,7 @@ class UserSynchronizer
      */
     public function synchronizePiwikAccessFromLdap($piwikLogin, $ldapUser)
     {
+        $piwikLogin = $this->userMapper->getExpectedLdapUsername($piwikLogin);
         if (empty($this->userAccessMapper)) {
             return;
         }
@@ -265,7 +267,7 @@ class UserSynchronizer
     /**
      * Gets the {@link $userAccessMapper} property.
      *
-     * @return UserAccessMapper
+     * @return UserAccessMapperInterface
      */
     public function getUserAccessMapper()
     {
@@ -275,7 +277,7 @@ class UserSynchronizer
     /**
      * Sets the {@link $userAccessMapper} property.
      *
-     * @param UserAccessMapper $userAccessMapper
+     * @param UserAccessMapperInterface $userAccessMapper
      */
     public function setUserAccessMapper($userAccessMapper)
     {
@@ -283,7 +285,7 @@ class UserSynchronizer
     }
 
     /**
-     * Creates a UserSynchronizer using INI configuration.
+     * Creates a UserSynchronizer using INI configuration or Settings.
      *
      * @return UserSynchronizer
      */
@@ -297,10 +299,17 @@ class UserSynchronizer
         /** @var LoggerInterface $logger */
         $logger = StaticContainer::get('Psr\Log\LoggerInterface');
 
+        /** @var Settings $pluginSettings */
+        $pluginSettings = Access::doAsSuperUser(function (){ return new Settings();});
+
         if (Config::isAccessSynchronizationEnabled()) {
             $result->setUserAccessMapper(UserAccessMapper::makeConfigured());
 
             $logger->debug("UserSynchronizer::{func}(): Using UserAccessMapper when synchronizing users.", array('func' => __FUNCTION__));
+        } elseif ($pluginSettings->accessByLdapGroups->getValue()) {
+            $result->setUserAccessMapper(new UserAccessMapperGroups($logger,$pluginSettings));
+
+            $logger->debug("UserSynchronizer::{func}(): Using UserAccessMapperGroups when synchronizing users.", array('func' => __FUNCTION__));
         } else {
             $logger->debug("UserSynchronizer::{func}(): LDAP access synchronization not enabled.", array('func' => __FUNCTION__));
         }

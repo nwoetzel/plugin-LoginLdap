@@ -31,7 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * For OpenLDAP, you will have to modify the schema to allow these attributes.
  */
-class UserAccessMapper
+class UserAccessMapper implements UserAccessMapperInterface
 {
     /**
      * The name of the LDAP attribute that holds the list of sites the user has
