@@ -246,7 +246,10 @@ class LdapUsers
 
             $user = $userEntries[0];
             // assemble memberships recursively
-            $user["groups"] = $this->userGroups($user,$ldapClient,$server,true);
+            $userGroups =  $this->userGroups($user,$ldapClient,$server,true);
+            if( !empty($userGroups)) {
+                $user["groups"] = $userGroups;
+            }
 
             return $user;
         });
@@ -448,6 +451,12 @@ class LdapUsers
      */
     protected function userGroups( $user, LdapClient $ldapClient, ServerInfo $server, $recursive = true)
     {
+        $groups = array();
+        if( !array_key_exists( strtolower($this->authenticationMemberOfField), $user)) {
+            return $groups;
+        }
+
+        // covert dn to nice names, which in the future could be samaccountname
         $groups = self::niceGroupNames($user[strtolower($this->authenticationMemberOfField)]);
         // determine also the parent groups of the user's memberships
         if( $recursive === true) {
@@ -466,7 +475,7 @@ class LdapUsers
 
                 // add the unchecked groups
                 $groups = array_merge($groups,$groups_to_check);
-            } while( count($groups_to_check) != 0);
+            } while( !empty($groups_to_check));
         }
 
         return $groups;
@@ -485,16 +494,23 @@ class LdapUsers
         $filter = self::getGroupEntryFilter($group);
         $entries = $ldapClient->fetchAll($server->getBaseDn(), $filter);
 
-        if( count($entries) > 0 && isset($entries[0][strtolower($this->authenticationMemberOfField)])) {
-            // multiple memberships as array
-            if( is_array($entries[0][strtolower($this->authenticationMemberOfField)])) {
-                return self::niceGroupNames($entries[0][strtolower($this->authenticationMemberOfField)]);
-            } else { // single membership as string
-                return self::niceGroupNames(array($entries[0][strtolower($this->authenticationMemberOfField)]));
-            }
+        $groups = array();
+        if( empty($entries)) {
+            return $groups;
         }
 
-        return array();
+        if( !array_key_exists( strtolower($this->authenticationMemberOfField), $entries[0])) {
+            return $groups;
+        }
+
+        // multiple memberships as array
+        if( is_array($entries[0][strtolower($this->authenticationMemberOfField)])) {
+            $groups = self::niceGroupNames($entries[0][strtolower($this->authenticationMemberOfField)]);
+        } else { // single membership as string
+            $groups = self::niceGroupNames(array($entries[0][strtolower($this->authenticationMemberOfField)]));
+        }
+
+        return $groups;
     }
 
     /**
