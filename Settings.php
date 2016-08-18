@@ -12,10 +12,9 @@ use Exception;
 
 use Piwik\Access;
 use Piwik\Piwik;
-use Piwik\Settings\SystemSetting;
-use Piwik\Settings\UserSetting;
-use Piwik\Plugins\SitesManager\API as APISitesManager;
 use Piwik\Plugins\LoginLdap\Model\LdapUsers;
+use Piwik\Plugins\SitesManager\API as APISitesManager;
+use Piwik\Settings\SystemSetting;
 
 /**
  * Defines Settings for LoginLdap.
@@ -26,12 +25,6 @@ use Piwik\Plugins\LoginLdap\Model\LdapUsers;
  */
 class Settings extends \Piwik\Plugin\Settings
 {
-    /**
-     * The LdapUsers instance to use when executing LDAP logic regarding LDAP users.
-     * @var LdapUsers
-     */
-    private $ldapUsers;
-
     /** @var string[] */
     private $groups;
 
@@ -49,8 +42,6 @@ class Settings extends \Piwik\Plugin\Settings
 
     protected function init()
     {
-        $this->ldapUsers = LdapUsers::makeConfigured();
-
         $this->setIntroduction('Configure Ldap groups with Super Access rights and for each site LDAP groups with admin or view access.');
 
         // System setting --> enable configuring access by LDAP groups
@@ -131,15 +122,15 @@ class Settings extends \Piwik\Plugin\Settings
 
         // the default validate function does not allow an empty array
         $groupSetting->validate = function ($value,$setting) {
-            $errorMsg = Piwik::translate('CoreAdminHome_PluginSettingsValueNotAllowed',
-                array($setting->title, 'LoginLdap'));
-
             // an empty array is also permitted
             if ($value == NULL) return;
 
             foreach ($value as $val) {
                 if (!array_key_exists($val, $setting->availableValues)) {
-                    throw new \Exception($errorMsg);
+            		$errorMsg = Piwik::translate('CoreAdminHome_PluginSettingsValueNotAllowed',
+                		array($setting->title, 'LoginLdap')) . " : " . $val . " in list: " . join(",", $setting->availableValues);
+
+                	throw new \Exception($errorMsg);
                 }
             }
         };
@@ -148,11 +139,11 @@ class Settings extends \Piwik\Plugin\Settings
     private function getGroups()
     {
         if ($this->groups == null) {
-            $ldapUsers = $this->ldapUsers;
             $groupNames = array();
             try {
-                $groupNames = Access::doAsSuperUser(function () use ($ldapUsers) {
-                    return $ldapUsers->getAllGroupNames();
+                $groupNames = Access::doAsSuperUser(function () {
+                	$ldapUsers = LdapUsers::makeConfigured();
+                	return $ldapUsers->getAllGroupNames();
                 });
             } catch (Exception $e) {
             }
