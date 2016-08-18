@@ -8,6 +8,8 @@
 
 namespace Piwik\Plugins\LoginLdap;
 
+use Exception;
+
 use Piwik\Access;
 use Piwik\Piwik;
 use Piwik\Settings\SystemSetting;
@@ -147,9 +149,13 @@ class Settings extends \Piwik\Plugin\Settings
     {
         if ($this->groups == null) {
             $ldapUsers = $this->ldapUsers;
-            $groupNames = Access::doAsSuperUser(function () use ($ldapUsers) {
-                return $ldapUsers->getAllGroupNames();
-            });
+            $groupNames = array();
+            try {
+                $groupNames = Access::doAsSuperUser(function () use ($ldapUsers) {
+                    return $ldapUsers->getAllGroupNames();
+                });
+            } catch (Exception $e) {
+            }
             $this->groups = array_combine($groupNames,$groupNames);
             asort($this->groups);
         }
