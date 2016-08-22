@@ -166,6 +166,12 @@ class UserSynchronizer
             ));
 
             return;
+        } else {
+            $this->logger->debug("UserSynchronizer::{func}: User '{user}' synchronize access to: {userAccess}.", array(
+                'func' => __FUNCTION__,
+                'user' => $piwikLogin,
+                'userAccess' => print_r($userAccess,true)
+            ));
         }
 
         // for the synchronization, need to reset all user accesses
@@ -176,7 +182,7 @@ class UserSynchronizer
         foreach ($userAccess as $userAccessLevel => $sites) {
             Access::doAsSuperUser(function () use ($usersManagerApi, $userAccessLevel, $sites, $piwikLogin) {
                 if ($userAccessLevel == 'superuser') {
-                    $usersManagerApi->setSuperUserAccess($piwikLogin, true);
+                    $usersManagerApi->setSuperUserAccess($piwikLogin, $sites);
                 } else {
                     $usersManagerApi->setUserAccess($piwikLogin, $userAccessLevel, $sites);
                 }

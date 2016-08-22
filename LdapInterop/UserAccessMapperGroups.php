@@ -59,6 +59,8 @@ class UserAccessMapperGroups implements UserAccessMapperInterface
      *         'admin' => array(3,4,5)
      *     )
      *
+     * When nothing us found, it will return
+     * array( 'superuser' => false ) otherwise, the access cannot be revoked
      * @param string[] $ldapUser The LDAP entity information.
      * @return array
      */
@@ -101,6 +103,10 @@ class UserAccessMapperGroups implements UserAccessMapperInterface
         $accessBySite = array();
         foreach ($sitesByAccess as $site => $access) {
             $accessBySite[$access][] = $site;
+        }
+
+        if(empty($accessBySite)) {
+            $accessBySite['superuser'] = false;
         }
 
         return $accessBySite;
