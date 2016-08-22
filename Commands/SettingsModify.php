@@ -73,7 +73,7 @@ class SettingsModify extends ConsoleCommand
         	case self::SET:
         	case self::REMOVE:
         	case self::RESET:
-        		$error = call_user_func_array( array( self::class, $mode), array( &$setting, $output, $values));
+        		$error = call_user_func_array( array( 'self', $mode), array( &$setting, $output, $values));
         		break;
         	default:
         		$output->writeln("<error>No valid mode: " . $mode . "</error>");
